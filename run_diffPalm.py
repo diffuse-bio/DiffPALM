@@ -48,7 +48,7 @@ if __name__ == "__main__":
 	RESULTS_DIR.mkdir(exist_ok=True)
 	
 	# set it based on gpu availability?
-	DEVICE  = 'cuda' # is this needed?
+	DEVICE  = 'cpu' # is this needed?
 
 	# define various parameters
 	# TO DO : make them into ARGS for invocation via Docker
