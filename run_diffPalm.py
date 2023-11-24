@@ -125,7 +125,7 @@ if __name__ == "__main__":
 	save_parameters(parameters_all, output_dir)
 
 
-	msa_data = read_data()
+	msa_data = read_data(file_name_1, file_name_2)
 
 	# preprocess and clean up data
 	get_species_name = (lambda strn: strn.split("|")[1])
