@@ -166,8 +166,8 @@ def process_two_fasta_files (file1, file2, out_dir):
     # write the processed data as a pickle file
     fname1 = pathlib.Path(file1).stem
     fname2 = pathlib.Path(file2).stem
-    fh1 = pathlib.Path(out_dir, fname1+".pkl")
-    fh2 = pathlib.Path(out_dir, fname2+".pkl")
+    fh1 = pathlib.Path(out_dir, fname1+"_processed.fasta")
+    fh2 = pathlib.Path(out_dir, fname2+"_processed.fasta")
     save_processed_msa_data (file1_processed_msa_list, fh1)
     save_processed_msa_data (file2_processed_msa_list, fh2)
 
@@ -175,8 +175,10 @@ def process_two_fasta_files (file1, file2, out_dir):
 # the data is in the format needed for DiffPalm
 
 def save_processed_msa_data (data, fpath):
-    open_file = open(fpath, "wb")
-    pickle.dump(data, open_file)
+    open_file = open(fpath, "w")
+    #pickle.dump(data, open_file)
+    for (line1, line2) in data:
+      open_file.write(line1+os.linesep+line2+os.linesep)
     open_file.close()
 
 # defines the pattern for the species name in the input file
@@ -185,7 +187,7 @@ def save_processed_msa_data (data, fpath):
 data_separator = "|"
 position_of_species_name = 1
 get_species_name = (lambda strn: strn.split(data_separator)[position_of_species_name])
-PAD_SEQ = "_" * 50
+PAD_SEQ = "-" * 50
 
 if __name__ == '__main__' :
 
@@ -194,19 +196,19 @@ if __name__ == '__main__' :
   )
 
   parser.add_argument("files", nargs="+", help="Name(s) of one zip or two fasta files.")
-  parser.add_argument("outdir", help="Output directory name for processed fasta files")
+  parser.add_argument("--o", "--outdir", help="Output directory name for processed fasta files")
   parser.add_argument("--f", "--format", choices=['DiffPalm', 'ESMPair', 'MLM'], 
 					  help="Output format - DiffPalm, DSMPair, etc.")
   args = parser.parse_args()
 
   in_files = args.files
-  out_dir = args.outdir
+  #out_dir = args.outdir
   print (in_files)
-  print (out_dir)
+  out_dir = pathlib.Path.cwd()
 
   if len(in_files) == 1 and zipfile.is_zipfile (in_files[0]):
 	# process zip file
-    print ("TO DO - processing for zipper version")
+    print ("TO DO - processing for zipped version")
 
   elif len(in_files) == 2:
     process_two_fasta_files (in_files[0], in_files[1], out_dir) 

@@ -10,6 +10,11 @@ from pathlib import Path
 from datetime import datetime
 import pickle
 
+from argparse import ArgumentParser
+import sys, os
+import zipfile
+
+
 
 def save_parameters(parameters_all, filepath):
 	"""Saves the parameters dictionary"""
@@ -24,20 +29,38 @@ def save_parameters(parameters_all, filepath):
 # where to define this?
 get_species_name = (lambda strn: strn.split("|")[1])
 
-def read_data (data_flag = "HK-RR"):
+def read_data (file_name_1, file_name_2):
 
 	data_in_dir = "/app/data" # TO DO - docker interface change this
 	# TO DO - form the input data path + pass it on
 
-	if data_flag == "HK-RR":
-		msa_data = [read_msa(data_in_dir+"/HK-RR/HK_in_Concat_nnn.fasta", -1),
-			read_msa(data_in_dir+"/HK-RR/RR_in_Concat_nnn.fasta", -1)]
+	
+	msa_data = [read_msa(file_name_1, -1),
+		read_msa(file_name_2, -1)]
 
 	return msa_data
 
 
 
 if __name__ == "__main__":
+
+	parser = ArgumentParser(
+	  description="Script for running DiffPalm"
+	  )
+	parser.add_argument("files", nargs="+", help="Name(s) of one zip or two fasta files.")
+	parser.add_argument("--o", "--outdir", help="Output directory for saving results.")
+
+	args = parser.parse_args()
+	in_files = args.files
+
+	if len(in_files) == 2:
+		file_name_1 = in_file[0]
+		file_name_2 = in_file[1]
+	else:
+		sys.exit("Please input the names of the two fasta files")
+
+	# DiffPalm model parameters - To DO: read from a config file or
+	# read from script inputs
 
 	EPOCHS = 100
 	TORCH_SEED = 100
