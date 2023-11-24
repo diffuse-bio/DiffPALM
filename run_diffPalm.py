@@ -54,8 +54,8 @@ if __name__ == "__main__":
 	in_files = args.files
 
 	if len(in_files) == 2:
-		file_name_1 = in_file[0]
-		file_name_2 = in_file[1]
+		file_name_1 = in_files[0]
+		file_name_2 = in_files[1]
 	else:
 		sys.exit("Please input the names of the two fasta files")
 
