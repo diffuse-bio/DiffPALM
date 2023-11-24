@@ -65,9 +65,9 @@ if __name__ == "__main__":
 	EPOCHS = 100
 	TORCH_SEED = 100
 
-	DOCKER_SHARE_BASE_DIR = "/app/data/"
+	DOCKER_SHARE_BASE_DIR = Path.cwd()
 	run_date1 = datetime.now().strftime("%Y_%b_%d")
-	RESULTS_DIR = Path (DOCKER_SHARE_BASE_DIR+run_date1)
+	RESULTS_DIR = DOCKER_SHARE_BASE_DIR / run_date1
 	RESULTS_DIR.mkdir(exist_ok=True)
 	
 	# set it based on gpu availability?
