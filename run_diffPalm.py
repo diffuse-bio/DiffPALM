@@ -133,9 +133,13 @@ if __name__ == "__main__":
 	dataset, species_sizes = generate_dataset(
 		parameters_dataset, msa_data, get_species_name=get_species_name
 		)
+	print ('after dataset generation')
 	tokenized_dataset = dataset_tokenizer(dataset, device=DEVICE)
+	print ('after tokenization')
 	left_msa, right_msa = tokenized_dataset["msa"]["left"], tokenized_dataset["msa"]["right"]
+	print ('after left and right msa')
 	positive_examples = tokenized_dataset["positive_examples"]
+	print (' before model initialization')
 	# initialize the model
 	dpalm = DiffPALM(species_sizes, **parameters_init)
 
