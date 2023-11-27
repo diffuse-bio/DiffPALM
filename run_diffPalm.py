@@ -48,7 +48,7 @@ if __name__ == "__main__":
 	  description="Script for running DiffPalm"
 	  )
 	parser.add_argument("files", nargs="+", help="Name(s) of one zip or two fasta files.")
-	parser.add_argument("--o", "--outdir", help="Output directory for saving results.")
+	parser.add_argument("-o", "--outdir", help="Output directory for saving results.")
 
 	args = parser.parse_args()
 	in_files = args.files
@@ -65,7 +65,8 @@ if __name__ == "__main__":
 	EPOCHS = 100
 	TORCH_SEED = 100
 
-	DOCKER_SHARE_BASE_DIR = Path.cwd()
+	#DOCKER_SHARE_BASE_DIR = Path.cwd()
+	DOCKER_SHARE_BASE_DIR = Path("/app/data")
 	run_date1 = datetime.now().strftime("%Y_%b_%d")
 	RESULTS_DIR = DOCKER_SHARE_BASE_DIR / run_date1
 	RESULTS_DIR.mkdir(exist_ok=True)
@@ -133,13 +134,13 @@ if __name__ == "__main__":
 	dataset, species_sizes = generate_dataset(
 		parameters_dataset, msa_data, get_species_name=get_species_name
 		)
-	print ('after dataset generation')
+	
 	tokenized_dataset = dataset_tokenizer(dataset, device=DEVICE)
-	print ('after tokenization')
+	
 	left_msa, right_msa = tokenized_dataset["msa"]["left"], tokenized_dataset["msa"]["right"]
-	print ('after left and right msa')
+	
 	positive_examples = tokenized_dataset["positive_examples"]
-	print (' before model initialization')
+	
 	# initialize the model
 	dpalm = DiffPALM(species_sizes, **parameters_init)
 
