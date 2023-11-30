@@ -1,6 +1,7 @@
 
 
 import numpy as np
+import torch
 
 from diffpalm.core import DiffPALM
 from diffpalm.msa_parsing import read_msa
@@ -26,8 +27,6 @@ def save_parameters(parameters_all, filepath):
 				f.write("%s, %s\n" % (key, parameters[key]))
 
 
-# where to define this?
-get_species_name = (lambda strn: strn.split("|")[1])
 
 def read_data (file_name_1, file_name_2):
 
@@ -49,37 +48,52 @@ if __name__ == "__main__":
 	  )
 	parser.add_argument("files", nargs="+", help="Name(s) of one zip or two fasta files.")
 	parser.add_argument("-o", "--outdir", help="Output directory for saving results.")
+	parser.add_argument("-n", "--num_msa", default=50,  type=int, help="Average Number of MSAs per species")
+	parser.add_argument("-s", "--species", nargs="+", help="List of Species to be considered in MSA pairing")
 
 	args = parser.parse_args()
 	in_files = args.files
 
+	
 	if len(in_files) == 2:
 		file_name_1 = in_files[0]
 		file_name_2 = in_files[1]
 	else:
 		sys.exit("Please input the names of the two fasta files")
 
+	out_dir = ""
+	if args.outdir is not None:
+		out_dir = args.outdir
+	
+	species_list = []
+	if args.species is not None:
+		species_list = args.species
+	
+	num_msa = args.num_msa
+	
 	# DiffPalm model parameters - To DO: read from a config file or
 	# read from script inputs
 
 	EPOCHS = 100
 	TORCH_SEED = 100
 
-	#DOCKER_SHARE_BASE_DIR = Path.cwd()
-	DOCKER_SHARE_BASE_DIR = Path("/app/data")
+	if out_dir:
+		DOCKER_SHARE_BASE_DIR = Path(out_dir)
+	else:
+		DOCKER_SHARE_BASE_DIR = Path("/app/data")
 	run_date1 = datetime.now().strftime("%Y_%b_%d")
 	RESULTS_DIR = DOCKER_SHARE_BASE_DIR / run_date1
 	RESULTS_DIR.mkdir(exist_ok=True)
 	
 	# set it based on gpu availability?
-	DEVICE  = 'cuda' # is this needed?
+	DEVICE  = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 	# define various parameters
 	# TO DO : make them into ARGS for invocation via Docker
 	# or read from a config file. TBD
 
 	parameters_dataset = {
-		"N": 50,  # Average number of sequences in the input
+		"N": num_msa,  # Average number of sequences in the input
 		"pos": 0,  # Size of the context pairs to use as positive example 
 		"max_size": 100,  # Max size of species MSAs (if same as N there is no limit on size)
 		"NUMPY_SEED": 10,
@@ -132,7 +146,8 @@ if __name__ == "__main__":
 	get_species_name = (lambda strn: strn.split("|")[1])
 
 	dataset, species_sizes = generate_dataset(
-		parameters_dataset, msa_data, get_species_name=get_species_name
+		parameters_dataset, msa_data, get_species_name=get_species_name,
+		species_list = species_list
 		)
 	
 	tokenized_dataset = dataset_tokenizer(dataset, device=DEVICE)

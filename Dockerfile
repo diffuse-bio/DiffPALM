@@ -29,11 +29,12 @@ WORKDIR /app
 
 RUN git clone --single-branch -b si_2311_docker https://username:password@github.com/diffuse-bio/DiffPALM.git
 #RUN git clone https://username:password@github.com/diffuse-bio/DiffPALM.git
-RUN python -m pip install fair-esm@git+https://github.com/Bitbol-Lab/esm.git@oh_input#egg=fair-es
+#RUN python -m pip install fair-esm@git+https://github.com/Bitbol-Lab/esm.git@oh_input#egg=fair-es
 
 WORKDIR /app/DiffPALM
 
 RUN python -m pip install .
 
-ENTRYPOINT ["python", "run_diffPalm.py", "/app/data/6L5K_1.paralogs_processed.fasta", "/app/data/6L5K_2.paralogs_processed.fasta"]
-~                                                                                                                                            
+ENTRYPOINT ["python", "run_diffPalm.py", "/app/data/6L5K_1.paralogs_processed.fasta", "/app/data/6L5K_2.paralogs_processed.fasta", \
+        "-s", "Quercus_lobata", "Glycine_max" ]
+                                                                                                                                      
