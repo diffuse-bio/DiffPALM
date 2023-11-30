@@ -6,6 +6,7 @@ __all__ = ['msa_alphabet', 'msa_batch_converter', 'generate_dataset', 'tokenizer
 # %% ../nbs/03_datasets.ipynb 3
 import numpy as np
 from numpy.random import default_rng
+import pickle
 
 import torch
 
@@ -15,8 +16,13 @@ import esm
 _, msa_alphabet = esm.pretrained.esm_msa1b_t12_100M_UR50S()
 msa_batch_converter = msa_alphabet.get_batch_converter()
 
+def save_rec_idx (data):
+    file_name = "msa_records_idx.pkl"
+    with open(file_name, "wb") as f:
+        pickle.dump(data, f)
 
-def generate_dataset(parameters, msa_data, get_species_name, return_species=False):
+
+def generate_dataset(parameters, msa_data, get_species_name, species_list=None, return_species=False):
     """
     Function that given the two full paired MSAs of interacting sequences (seen as a list of tuples)
     creates the dataset (dictionary of MSAs, both "left" and "right" ones), made of:
@@ -24,7 +30,7 @@ def generate_dataset(parameters, msa_data, get_species_name, return_species=Fals
     - "msa":   the MSA used to start the training of the permutation matrix.
     - "positive_examples":  MSA of correct pairs to use as context during the training. It can be None
                             if we don't want any context.
-
+    - species_list if given only MSA for these species will be selected. If no species list given, random choice.
     We have to specify if we either want the list of blocks or the positive examples by setting the value of
     `generate_blocks` to True or False.
 
@@ -59,23 +65,38 @@ def generate_dataset(parameters, msa_data, get_species_name, return_species=Fals
     # ----------------------------------------------------------------------------------------------
     # Set positive_examples to None
     dataset["positive_examples"] = None
-    while True:
-        # Iterate until we find a collection of sequences with total depth
-        # 0.9 * N <= D <= 1.1 * N
-        idxs_shuffled = np.arange(len(species_l))
-        rng.shuffle(idxs_shuffled)
-        cumsum_counts_shuffled = np.cumsum(counts_l[idxs_shuffled])
-        idxs_in_range = np.flatnonzero(
-            np.abs(cumsum_counts_shuffled - N_init) <= N_init * 0.1
-        )
-        if len(idxs_in_range):
-            num_species = rng.choice(idxs_in_range) + 1
-            rand_species = np.sort(idxs_shuffled[:num_species])
-            counts_in_sample = counts_l[rand_species]
-            if np.all(counts_in_sample > 1) and np.all(
-                counts_in_sample <= max_size_init
-            ):
-                break
+
+    # generate from a given list of species or random
+
+    if species_list:
+        print ('species list given')
+        rand_species = []
+        counts_in_sample = []
+        for ind_species in species_list:
+            i_sp_idx = np.where(species_l == ind_species)[0][0]
+            rand_species.append(i_sp_idx)
+            counts_in_sample.append(counts_l[i_sp_idx])
+               
+    else:  # no species list generate random MSA samples subject to total max
+
+        while True:
+            # Iterate until we find a collection of sequences with total depth
+            # 0.9 * N <= D <= 1.1 * N
+            idxs_shuffled = np.arange(len(species_l))
+            rng.shuffle(idxs_shuffled)
+            cumsum_counts_shuffled = np.cumsum(counts_l[idxs_shuffled])
+            idxs_in_range = np.flatnonzero(
+                np.abs(cumsum_counts_shuffled - N_init) <= N_init * 0.1
+            )
+            if len(idxs_in_range):
+                num_species = rng.choice(idxs_in_range) + 1
+                rand_species = np.sort(idxs_shuffled[:num_species])
+                counts_in_sample = counts_l[rand_species]
+                if np.all(counts_in_sample > 1) and np.all(
+                    counts_in_sample <= max_size_init
+                ):
+                    break
+    
     # Create msa by concatenating the selected sequences
     rand_idxs_l = []
     rand_idxs_r = []
@@ -90,6 +111,12 @@ def generate_dataset(parameters, msa_data, get_species_name, return_species=Fals
         "left": [msa_data[0][i] for i in rand_idxs_l],
         "right": [msa_data[1][i] for i in rand_idxs_r],
     }
+
+    indx_list = {"species_names" : species_l[rand_species].tolist(),
+                 "counts_per_species" : counts_in_sample,
+                 "left_msa_idx" : rand_idxs_l,
+                 "right_msa_idx" : rand_idxs_r}
+    save_rec_idx(indx_list)
     # Print data
     print("Generated initial MSA")
     print("\tSpecies selected, total number of species selected:")
@@ -99,6 +126,7 @@ def generate_dataset(parameters, msa_data, get_species_name, return_species=Fals
     print(counts_in_sample, ",", sum(counts_in_sample))
     # ----------------------------------------------------------------------------------------------
     # POSITIVE EXAMPLES
+    # TODO: add species selection code
     # ----------------------------------------------------------------------------------------------
     if parameters["pos"]:
         while True:
@@ -130,7 +158,7 @@ def generate_dataset(parameters, msa_data, get_species_name, return_species=Fals
             ]
         dataset["positive_examples"] = {
             "left": [msa_data[0][i] for i in rand_idxs_pos_l],
-            "right": [msa_data[1][i] for i in rand_idxs_rand_idxs_pos_rpos],
+            "right": [msa_data[1][i] for i in rand_idxs_pos_r],
         }
         # Print data
         print("\n\nGenerated positive examples")
