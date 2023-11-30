@@ -69,7 +69,6 @@ def generate_dataset(parameters, msa_data, get_species_name, species_list=None, 
     # generate from a given list of species or random
 
     if species_list:
-        print ('species list given')
         rand_species = []
         counts_in_sample = []
         for ind_species in species_list:
